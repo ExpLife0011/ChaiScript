@@ -374,7 +374,7 @@ namespace chaiscript
       template<typename T>
         bool convertable_type() const noexcept
         {
-          constexpr auto type = user_type<T>().bare_type_info();
+          static const auto type = user_type<T>().bare_type_info();
           return thread_cache().count(type) != 0;
         }
 

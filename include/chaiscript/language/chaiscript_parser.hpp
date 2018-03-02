@@ -429,12 +429,12 @@ namespace chaiscript
       ChaiScript_Parser(ChaiScript_Parser &&) = default;
       ChaiScript_Parser &operator=(ChaiScript_Parser &&) = delete;
 
-      constexpr static auto m_alphabet = build_alphabet();
       constexpr static Operator_Matches m_operator_matches{};
 
       /// test a char in an m_alphabet
       constexpr bool char_in_alphabet(char c, detail::Alphabet a) const noexcept { 
-        return m_alphabet[a][static_cast<uint8_t>(c)]; 
+		  static const auto m_alphabet = build_alphabet();
+		  return m_alphabet[a][static_cast<uint8_t>(c)];
       }
 
       /// Prints the parsed ast_nodes as a tree
@@ -780,7 +780,9 @@ namespace chaiscript
             return const_var(static_cast<unsigned int>(u));
           } else if (!unsigned_ && !longlong_ && u >= std::numeric_limits<long>::min() && u <= std::numeric_limits<long>::max()) {
             return const_var(static_cast<long>(u));
-          } else if ((unsigned_ || base != 10) && !longlong_ && u >= std::numeric_limits<unsigned long>::min() && u <= std::numeric_limits<unsigned long>::max()) {
+          } else if ((unsigned_ || base != 10) && !longlong_ 
+                     && u >= std::numeric_limits<unsigned long>::min() 
+                     && u <= std::numeric_limits<unsigned long>::max()) {
             return const_var(static_cast<unsigned long>(u));
           } else if (!unsigned_ && u >= std::numeric_limits<long long>::min() && u <= std::numeric_limits<long long>::max()) {
             return const_var(static_cast<long long>(u));
@@ -946,7 +948,7 @@ namespace chaiscript
             } break;
             case utility::fnv1a_32("__FUNC__"): {
               std::string fun_name = "NOT_IN_FUNCTION";
-              for (size_t idx = m_match_stack.size() - 1; idx > 0; --idx)
+              for (size_t idx = m_match_stack.empty() ? 0 : m_match_stack.size() - 1; idx > 0; --idx)
               {
                 if (m_match_stack[idx-1]->identifier == AST_Node_Type::Id
                     && m_match_stack[idx-0]->identifier == AST_Node_Type::Arg_List) {
@@ -959,7 +961,7 @@ namespace chaiscript
             } break;
             case utility::fnv1a_32("__CLASS__"): {
               std::string fun_name = "NOT_IN_CLASS";
-              for (size_t idx = m_match_stack.size() - 1; idx > 1; --idx)
+              for (size_t idx = m_match_stack.empty() ? 0 : m_match_stack.size() - 1; idx > 1; --idx)
               {
                 if (m_match_stack[idx-2]->identifier == AST_Node_Type::Id
                     && m_match_stack[idx-1]->identifier == AST_Node_Type::Id
@@ -1027,7 +1029,7 @@ namespace chaiscript
           int in_interpolation = 0;
           bool in_quote = false;
 
-          while (m_position.has_more() && ((*m_position != '\"') || ((*m_position == '\"') && (in_interpolation > 0)) ||  ((*m_position == '\"') && (prev_char == '\\')))) {
+          while (m_position.has_more() && ((*m_position != '\"') || (in_interpolation > 0) || (prev_char == '\\'))) {
 
             if (!Eol_()) {
               if (prev_char == '$' && *m_position == '{') {
@@ -1325,7 +1327,7 @@ namespace chaiscript
           char prev_char = *m_position;
           ++m_position;
 
-          while (m_position.has_more() && ((*m_position != '\'') || ((*m_position == '\'') && (prev_char == '\\')))) {
+          while (m_position.has_more() && ((*m_position != '\'') || (prev_char == '\\'))) {
             if (!Eol_()) {
               if (prev_char == '\\') {
                 prev_char = 0;

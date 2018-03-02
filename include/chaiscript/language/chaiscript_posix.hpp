@@ -41,7 +41,7 @@ namespace chaiscript
         struct DLSym
         {
           DLSym(DLModule &t_mod, const std::string &t_symbol)
-            : m_symbol(cast_symbol(dlsym(t_mod.m_data, t_symbol.c_str())))
+            : m_symbol(reinterpret_cast<T>(dlsym(t_mod.m_data, t_symbol.c_str())))
           {
             if (!m_symbol)
             {
